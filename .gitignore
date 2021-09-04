@@ -1,2 +1,10 @@
-rt
 out.ppm
+
+debug/
+target/
+
+Cargo.lock
+
+**/*.rs.bk
+
+*.pdb
