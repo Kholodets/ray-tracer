@@ -1,34 +1,20 @@
 mod vec3;
 use crate::vec3::Vec3;
+use std::io::Write;
+use std::io::stderr;
+
 const NX: i32 = 400;
 const NY: i32 = 200;
 
 fn main() {
-    
-    let a = Vec3 {e: [1.0, 2.0, 3.0]};
-    let b = Vec3 {e: [4.0, 5.0, 6.0]};
 
-    let n: f64 = 2.0;
-
-    println!("Vector a: {:?}", a);
-    println!("Vector b: {:?}", b);
-
-    println!("a+b: {:?}", a + b);
-    println!("b-a: {:?}", b - a);
-
-    println!("a * b: {:?}", a * b);
-    println!("a * n: {:?}", a * n);
-
-    println!("b / n: {:?}", b / n);
-    
-    println!("a cross b: {:?}", a.cross(&b));
-    println!("a dot b: {}", a.dot(&b));
-
-    /* println!("P3");
+    println!("P3");
     println!("{} {}", NX, NY);
     println!("255");
 
-    for i in (0..NY-1).rev() {
+    for i in (0..NY).rev() {
+        eprint!("\rLines remaining: {} ({}%) ", i, 100.0*((NY-i) as f32)/(NY as f32));
+        stderr().flush();
         for j in 0..NX {
             let r = (j as f32) / (NX as f32);
             let g = (i as f32) / (NY as f32);
@@ -39,6 +25,6 @@ fn main() {
 
             println!("{} {} {}", ir, ig, ib);
         }
-    }  */ 
+    }
+    eprintln!("\nDone!");
 }
-
