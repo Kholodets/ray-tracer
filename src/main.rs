@@ -1,8 +1,30 @@
+mod vec3;
+use crate::vec3::Vec3;
 const NX: i32 = 400;
 const NY: i32 = 200;
 
 fn main() {
-    println!("P3");
+    
+    let a = Vec3 {e: [1.0, 2.0, 3.0]};
+    let b = Vec3 {e: [4.0, 5.0, 6.0]};
+
+    let n: f64 = 2.0;
+
+    println!("Vector a: {:?}", a);
+    println!("Vector b: {:?}", b);
+
+    println!("a+b: {:?}", a + b);
+    println!("b-a: {:?}", b - a);
+
+    println!("a * b: {:?}", a * b);
+    println!("a * n: {:?}", a * n);
+
+    println!("b / n: {:?}", b / n);
+    
+    println!("a cross b: {:?}", a.cross(&b));
+    println!("a dot b: {}", a.dot(&b));
+
+    /* println!("P3");
     println!("{} {}", NX, NY);
     println!("255");
 
@@ -17,6 +39,6 @@ fn main() {
 
             println!("{} {} {}", ir, ig, ib);
         }
-    }   
+    }  */ 
 }
 
