@@ -20,6 +20,10 @@ impl Vec3 {
         self.x().abs() < s && self.y().abs() < s && self.z().abs() < s
     }
 
+    pub fn reflect(v: Vec3, n: Vec3) -> Vec3 {
+        v - n*v.dot(&n)*2.0
+    }
+
     pub fn x(&self) -> f64 {
         self.e[0]
     }

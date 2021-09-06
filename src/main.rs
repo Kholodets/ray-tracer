@@ -4,27 +4,30 @@ mod sphere;
 mod scene;
 mod camera;
 mod lambertian;
+mod metal;
 use crate::sphere::Sphere;
 use crate::ray::Ray;
 use crate::vec3::Vec3;
 use crate::scene::Scene;
 use crate::camera::Camera;
 use crate::lambertian::Lambertian;
+use crate::metal::Metal;
 use std::io::Write;
 use std::io::stderr;
 extern crate rand;
 use rand::Rng;
 use std::num;
 
-const X_RES: i32 = 500;
-const Y_RES: i32 = 500;
+const X_RES: i32 = 600;
+const Y_RES: i32 = 300;
 const ORIGIN_VEC: Vec3 = Vec3 {e: [0.0,0.0,0.0]};
-const TEST_SPHERE: Sphere = Sphere {center: Vec3 {e: [0.0, 0.0, -1.0]}, radius: 0.5, mat: &LAMB_GREY};
+const TEST_SPHERE: Sphere = Sphere {center: Vec3 {e: [-0.5, 0.0, -1.0]}, radius: 0.5, mat: &MIRROR};
 const GROUND: Sphere = Sphere {center: Vec3 {e: [0.0, -100.5, -1.0]}, radius: 100.0, mat: &LAMB_GREY};
 const AA_SAMPLES: i32 = 75;
 const REF_DEPTH: i32 = 30;
-const LAMB_RED: Lambertian = Lambertian {color: Vec3 {e: [0.7, 0.0, 0.0]}};
+const LAMB_RED: Lambertian = Lambertian {color: Vec3 {e: [0.5, 0.0, 0.0]}};
 const LAMB_GREY: Lambertian = Lambertian {color: Vec3 {e:[0.5, 0.5, 0.5]}};
+const MIRROR: Metal = Metal {color: Vec3 {e: [0.8, 0.99, 0.99]}};
 
 pub trait Material {
     fn albedo(&self) -> Vec3;
@@ -59,12 +62,16 @@ fn main() {
 
     let cam = Camera::new(vph, ar* vph, 1.0);
 
-    eprintln!("{}", ar);
+    let mut world = Scene {list: vec![&TEST_SPHERE, &GROUND]};
 
-    let world = Scene {list: vec![&TEST_SPHERE, &GROUND]};
+    world.add(&Sphere {
+        center: Vec3 {e: [0.5, 0.0, -1.0]},
+        radius: 0.5,
+        mat: &LAMB_RED
+    });
 
     for i in (0..Y_RES).rev() {
-        eprint!("\rLines remaining: {} ({}%) ", i, 100.0*((Y_RES-i) as f32)/(Y_RES as f32));
+        eprint!("\rLines remaining: {} ({:.2}%) ", i, 100.0*((Y_RES-i) as f32)/(Y_RES as f32));
         stderr().flush().expect("failed to flush stderr");
         for j in 0..X_RES {
             let mut color = Vec3 {e: [0.0, 0.0, 0.0]};
@@ -85,6 +92,7 @@ fn main() {
 fn ray_color(ray: &Ray, scene: &dyn Object, depth: i32) -> Vec3 {
     if depth <= 0 {
         Vec3 {e: [0.0, 0.0, 0.0]}
+
     } else {
         let h = scene.hit(ray, 0.001, f64::INFINITY);
 
