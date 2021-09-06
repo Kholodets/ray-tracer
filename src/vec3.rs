@@ -1,9 +1,25 @@
+use rand::Rng;
+
 #[derive(Debug, Copy, Clone)]
 pub struct Vec3 {
     pub e: [f64; 3],
 }
 
 impl Vec3 {
+    pub fn random_unit_vector() -> Vec3 {
+        let mut rng =  rand::thread_rng();
+        Vec3 {e:[
+            rng.gen::<f64>(),
+            rng.gen::<f64>(),
+            rng.gen::<f64>()
+        ]}
+    }
+
+    pub fn near_zero(&self) -> bool {
+        let s = 1e-8;
+        self.x().abs() < s && self.y().abs() < s && self.z().abs() < s
+    }
+
     pub fn x(&self) -> f64 {
         self.e[0]
     }

@@ -2,15 +2,16 @@ use crate::ray::Ray;
 use crate::vec3::Vec3;
 use crate::HitRecord;
 use crate::Object;
+use crate::Material;
 
-#[derive(Debug, Copy, Clone)]
-pub struct Sphere {
+#[derive(Copy, Clone)]
+pub struct Sphere<'c> {
     pub center: Vec3,
     pub radius: f64,
-    //pub material: Material
+    pub mat: &'c Material
 }
 
-impl Object for Sphere {
+impl Object for Sphere<'_> {
     fn hit(&self, ray: &Ray, t_min: f64, t_max: f64) -> Option<HitRecord> {
         let oc = ray.orig() - self.center;
         let a = ray.dir().length_squared();
@@ -36,7 +37,7 @@ impl Object for Sphere {
         let face = ray.dir().dot(&n) < 0.0;
 
         Some(HitRecord {
-            hit: true,
+            mat: self.mat,
             t: root,
             p: point,
             norm: n,
