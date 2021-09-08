@@ -5,12 +5,14 @@ mod scene;
 mod camera;
 mod lambertian;
 mod metal;
+mod light;
 use crate::sphere::Sphere;
 use crate::ray::Ray;
 use crate::vec3::Vec3;
 use crate::scene::Scene;
 use crate::camera::Camera;
 use crate::lambertian::Lambertian;
+use crate::light::Light;
 use crate::metal::Metal;
 use std::io::Write;
 use std::io::stderr;
@@ -18,13 +20,14 @@ extern crate rand;
 use rand::Rng;
 use std::num;
 
-const X_RES: i32 = 600;
-const Y_RES: i32 = 300;
+const X_RES: i32 = 640;
+const Y_RES: i32 = 480;
 const ORIGIN_VEC: Vec3 = Vec3 {e: [0.0,0.0,0.0]};
-const TEST_SPHERE: Sphere = Sphere {center: Vec3 {e: [-0.5, 0.0, -1.0]}, radius: 0.5, mat: &MIRROR};
-const GROUND: Sphere = Sphere {center: Vec3 {e: [0.0, -100.5, -1.0]}, radius: 100.0, mat: &LAMB_GREY};
-const AA_SAMPLES: i32 = 75;
+const TEST_SPHERE: Sphere = Sphere {center: Vec3 {e: [-0.5, 0.0, -1.0]}, radius: 0.5, mat: &LAMB_RED};
+const GROUND: Sphere = Sphere {center: Vec3 {e: [0.0, -1000.5, -1.0]}, radius: 1000.0, mat: &LAMB_GREY};
+const AA_SAMPLES: i32 = 50;
 const REF_DEPTH: i32 = 30;
+const GAMMA: f64 = 4.0;
 const LAMB_RED: Lambertian = Lambertian {color: Vec3 {e: [0.5, 0.0, 0.0]}};
 const LAMB_GREY: Lambertian = Lambertian {color: Vec3 {e:[0.5, 0.5, 0.5]}};
 const MIRROR: Metal = Metal {color: Vec3 {e: [0.8, 0.99, 0.99]}};
@@ -32,6 +35,7 @@ const MIRROR: Metal = Metal {color: Vec3 {e: [0.8, 0.99, 0.99]}};
 pub trait Material {
     fn albedo(&self) -> Vec3;
     fn scatter(&self, ray: &Ray, hr: &HitRecord) -> Option<Ray>;
+    fn absorb(&self) -> Vec3;
 }
 
 pub struct HitRecord<'d> {
@@ -47,7 +51,6 @@ pub trait Object {
 }
 
 fn main() {
-
     println!("P3");
     println!("{} {}", X_RES, Y_RES);
     println!("255");
@@ -70,6 +73,12 @@ fn main() {
         mat: &LAMB_RED
     });
 
+    world.add(&Sphere {
+        center: Vec3 {e: [-0.0, 1.5, -1.0]},
+        radius: 0.5,
+        mat: &Light {color: Vec3 {e: [1.0, 1.0, 0.8]}}
+    });
+
     for i in (0..Y_RES).rev() {
         eprint!("\rLines remaining: {} ({:.2}%) ", i, 100.0*((Y_RES-i) as f32)/(Y_RES as f32));
         stderr().flush().expect("failed to flush stderr");
@@ -86,7 +95,7 @@ fn main() {
             write_color(color, AA_SAMPLES);
         }
     }
-    eprintln!("\nDone!");
+    eprintln!("\nDone!"); 
 }
 
 fn ray_color(ray: &Ray, scene: &dyn Object, depth: i32) -> Vec3 {
@@ -100,7 +109,7 @@ fn ray_color(ray: &Ray, scene: &dyn Object, depth: i32) -> Vec3 {
             Some(hr) => {
                 match hr.mat.scatter(ray, &hr) {
                     Some(sr) => ray_color(&sr, scene, depth - 1)*hr.mat.albedo(),
-                    None => Vec3 {e: [0.0, 0.0, 0.0]},
+                    None => hr.mat.absorb(),
                 }
             },
 
@@ -111,7 +120,7 @@ fn ray_color(ray: &Ray, scene: &dyn Object, depth: i32) -> Vec3 {
 
 fn sky_color(ray: &Ray) -> Vec3 {
     let t = 0.5*(ray.dir().unit_vector().y() + 1.0);
-    (Vec3 {e:[1.0,1.0,1.0]})*(1.0 - t) + (Vec3 {e: [0.5, 0.7, 1.0]})*t
+    (Vec3 {e:[1.0,1.0,1.0]})*(1.0 - t)*0.01 + (Vec3 {e: [0.5, 0.7, 1.0]})*t*0.01
 }
 
 fn clamp(n: f64, min: f64, max: f64) -> f64 {
@@ -126,9 +135,9 @@ fn clamp(n: f64, min: f64, max: f64) -> f64 {
 
 fn write_color(color: Vec3, samples: i32) {
     let scale = 1.0 / samples as f64;
-    let r = clamp((scale*color.x()).sqrt(), 0.0, 0.999);
-    let g = clamp((scale*color.y()).sqrt(), 0.0, 0.999);
-    let b = clamp((scale*color.z()).sqrt(), 0.0, 0.999);
+    let r = clamp((scale*color.x()).powf(1.0/GAMMA), 0.0, 0.999);
+    let g = clamp((scale*color.y()).powf(1.0/GAMMA), 0.0, 0.999);
+    let b = clamp((scale*color.z()).powf(1.0/GAMMA), 0.0, 0.999);
     println!("{} {} {}", 
              (r*256.0) as i32, 
              (g*256.0) as i32, 

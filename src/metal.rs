@@ -20,4 +20,8 @@ impl Material for Metal {
     fn albedo(&self) -> Vec3 {
         self.color
     }
+
+    fn absorb(&self) -> Vec3 {
+            Vec3 {e: [0.0, 0.0, 0.0]}
+    }
 }

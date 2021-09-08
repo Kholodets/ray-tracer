@@ -21,4 +21,8 @@ impl Material for Lambertian {
     fn albedo(&self) -> Vec3 {
         self.color
     }
+
+    fn absorb(&self) -> Vec3 {
+        Vec3 {e: [0.0, 0.0, 0.0]}
+    }
 }

@@ -8,11 +8,13 @@ pub struct Vec3 {
 impl Vec3 {
     pub fn random_unit_vector() -> Vec3 {
         let mut rng =  rand::thread_rng();
-        Vec3 {e:[
-            rng.gen::<f64>(),
-            rng.gen::<f64>(),
-            rng.gen::<f64>()
-        ]}
+        let rv = Vec3 {e:[
+            rng.gen::<f64>() - 0.5,
+            rng.gen::<f64>() - 0.5,
+            rng.gen::<f64>() - 0.5
+        ]};
+
+        rv.unit_vector()
     }
 
     pub fn near_zero(&self) -> bool {
