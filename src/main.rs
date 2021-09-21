@@ -20,13 +20,13 @@ extern crate rand;
 use rand::Rng;
 use std::num;
 
-const X_RES: i32 = 640;
-const Y_RES: i32 = 480;
+const X_RES: i32 = 1280;
+const Y_RES: i32 = 960;
 const ORIGIN_VEC: Vec3 = Vec3 {e: [0.0,0.0,0.0]};
-const TEST_SPHERE: Sphere = Sphere {center: Vec3 {e: [-0.5, 0.0, -1.0]}, radius: 0.5, mat: &LAMB_RED};
+const TEST_SPHERE: Sphere = Sphere {center: Vec3 {e: [-0.5, 0.0, -1.5]}, radius: 0.5, mat: &LAMB_RED};
 const GROUND: Sphere = Sphere {center: Vec3 {e: [0.0, -1000.5, -1.0]}, radius: 1000.0, mat: &LAMB_GREY};
-const AA_SAMPLES: i32 = 50;
-const REF_DEPTH: i32 = 30;
+const AA_SAMPLES: i32 = 150;
+const REF_DEPTH: i32 = 50;
 const GAMMA: f64 = 4.0;
 const LAMB_RED: Lambertian = Lambertian {color: Vec3 {e: [0.5, 0.0, 0.0]}};
 const LAMB_GREY: Lambertian = Lambertian {color: Vec3 {e:[0.5, 0.5, 0.5]}};
@@ -68,13 +68,19 @@ fn main() {
     let mut world = Scene {list: vec![&TEST_SPHERE, &GROUND]};
 
     world.add(&Sphere {
-        center: Vec3 {e: [0.5, 0.0, -1.0]},
+        center: Vec3 {e: [0.5, 0.0, -1.5]},
         radius: 0.5,
-        mat: &LAMB_RED
+        mat: &MIRROR
     });
 
     world.add(&Sphere {
-        center: Vec3 {e: [-0.0, 1.5, -1.0]},
+        center: Vec3 {e: [0.0, -0.2, -0.7]},
+        radius: 0.2,
+        mat: &Lambertian {color: Vec3 {e: [0.0, 0.0, 0.8]}}
+    });
+
+    world.add(&Sphere {
+        center: Vec3 {e: [1.0, 1.2, 0.0]},
         radius: 0.5,
         mat: &Light {color: Vec3 {e: [1.0, 1.0, 0.8]}}
     });
