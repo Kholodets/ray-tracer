@@ -6,6 +6,7 @@ mod camera;
 mod lambertian;
 mod metal;
 mod light;
+mod mtexture;
 use crate::sphere::Sphere;
 use crate::ray::Ray;
 use crate::vec3::Vec3;
@@ -14,26 +15,28 @@ use crate::camera::Camera;
 use crate::lambertian::Lambertian;
 use crate::light::Light;
 use crate::metal::Metal;
+use crate::mtexture::Mtexture;
 use std::io::Write;
 use std::io::stderr;
 extern crate rand;
 use rand::Rng;
 use std::num;
+extern crate image;
 
-const X_RES: i32 = 1280;
-const Y_RES: i32 = 960;
+const X_RES: i32 = 720;
+const Y_RES: i32 = 480;
 const ORIGIN_VEC: Vec3 = Vec3 {e: [0.0,0.0,0.0]};
-const TEST_SPHERE: Sphere = Sphere {center: Vec3 {e: [-0.5, 0.0, -1.5]}, radius: 0.5, mat: &LAMB_RED};
-const GROUND: Sphere = Sphere {center: Vec3 {e: [0.0, -1000.5, -1.0]}, radius: 1000.0, mat: &LAMB_GREY};
-const AA_SAMPLES: i32 = 150;
-const REF_DEPTH: i32 = 50;
+const TEST_SPHERE: Sphere = Sphere {center: Vec3 {e: [-0.5, 0.0, -1.5]}, radius: 0.5, mat: &MIRROR};
+const GROUND: Sphere = Sphere {center: Vec3 {e: [0.0, -1000.5, -1.0]}, radius: 1000.0, mat: &MIRROR};
+const AA_SAMPLES: i32 = 70;
+const REF_DEPTH: i32 = 30;
 const GAMMA: f64 = 4.0;
 const LAMB_RED: Lambertian = Lambertian {color: Vec3 {e: [0.5, 0.0, 0.0]}};
 const LAMB_GREY: Lambertian = Lambertian {color: Vec3 {e:[0.5, 0.5, 0.5]}};
 const MIRROR: Metal = Metal {color: Vec3 {e: [0.8, 0.99, 0.99]}};
 
 pub trait Material {
-    fn albedo(&self) -> Vec3;
+    fn albedo(&self, hr: &HitRecord) -> Vec3;
     fn scatter(&self, ray: &Ray, hr: &HitRecord) -> Option<Ray>;
     fn absorb(&self) -> Vec3;
 }
@@ -56,7 +59,8 @@ fn main() {
     println!("255");
 
     let ar = X_RES as f64 / Y_RES as f64;
-    
+   
+
     let mut rng = rand::thread_rng();
 
     let vph = 2.0;
@@ -65,23 +69,31 @@ fn main() {
 
     let cam = Camera::new(vph, ar* vph, 1.0);
 
-    let mut world = Scene {list: vec![&TEST_SPHERE, &GROUND]};
+    let floosh = Mtexture::new("floosh.bmp", 3.0);
+    
+    let flooshorb = Sphere {
+        center: Vec3 {e: [0.0, -0.2, -0.7]},
+        radius: 0.2,
+        mat: &floosh
+    };
+
+    let mut world = Scene {list: vec![&TEST_SPHERE, &GROUND, &flooshorb]};
 
     world.add(&Sphere {
         center: Vec3 {e: [0.5, 0.0, -1.5]},
         radius: 0.5,
-        mat: &MIRROR
+        mat: &LAMB_RED
     });
 
-    world.add(&Sphere {
+    /*world.add(&Sphere {
         center: Vec3 {e: [0.0, -0.2, -0.7]},
         radius: 0.2,
         mat: &Lambertian {color: Vec3 {e: [0.0, 0.0, 0.8]}}
-    });
+    });*/
 
     world.add(&Sphere {
-        center: Vec3 {e: [1.0, 1.2, 0.0]},
-        radius: 0.5,
+        center: Vec3 {e: [75.0, 75.0, 0.0]},
+        radius: 100.0,
         mat: &Light {color: Vec3 {e: [1.0, 1.0, 0.8]}}
     });
 
@@ -114,7 +126,7 @@ fn ray_color(ray: &Ray, scene: &dyn Object, depth: i32) -> Vec3 {
         match h {
             Some(hr) => {
                 match hr.mat.scatter(ray, &hr) {
-                    Some(sr) => ray_color(&sr, scene, depth - 1)*hr.mat.albedo(),
+                    Some(sr) => ray_color(&sr, scene, depth - 1)*hr.mat.albedo(&hr),
                     None => hr.mat.absorb(),
                 }
             },
@@ -126,7 +138,7 @@ fn ray_color(ray: &Ray, scene: &dyn Object, depth: i32) -> Vec3 {
 
 fn sky_color(ray: &Ray) -> Vec3 {
     let t = 0.5*(ray.dir().unit_vector().y() + 1.0);
-    (Vec3 {e:[1.0,1.0,1.0]})*(1.0 - t)*0.01 + (Vec3 {e: [0.5, 0.7, 1.0]})*t*0.01
+    (Vec3 {e:[1.0,1.0,1.0]})*(1.0 - t)*0.1 + (Vec3 {e: [0.5, 0.7, 1.0]})*t*0.1
 }
 
 fn clamp(n: f64, min: f64, max: f64) -> f64 {

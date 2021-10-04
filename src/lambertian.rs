@@ -18,7 +18,7 @@ impl Material for Lambertian {
         }
     }
 
-    fn albedo(&self) -> Vec3 {
+    fn albedo(&self, hr: &HitRecord) -> Vec3 {
         self.color
     }
 

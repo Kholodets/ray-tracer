@@ -2,17 +2,22 @@ use crate::vec3::Vec3;
 use crate::ray::Ray;
 use crate::Material;
 use crate::HitRecord;
-use image::{RgbImage, Rgb};
+use image::{RgbImage, Rgb, Pixel};
 use image::{GenericImage, GenericImageView, ImageBuffer, open};
 
 pub struct Mtexture {
-    pub texture: RgbImage
+    pub texture: RgbImage,
+    pub x: u32,
+    pub gamma: f64
 }
 
 impl Mtexture {
-    pub fn new(name: &str) -> Mtexture {
+    pub fn new(name: &str, g: f64) -> Mtexture {
+        let tex = open(name).unwrap().into_rgb8();
         Mtexture {
-            texture: open("floosh.bmp").unwrap().into_rgb8()
+            x: tex.width(),
+            texture: tex,
+            gamma: g
         }
     }
 }
@@ -30,10 +35,16 @@ impl Material for Mtexture {
     }
 
     fn albedo(&self, hr: &HitRecord) -> Vec3 {
-        Vec3 {e: [0.0, 0.0, 0.0]}
+        let xp = ((hr.norm.x()/2.0 + 0.5)*(self.x as f64)) as u32;
+        let yp = (((-hr.norm.y())/2.0 + 0.5)*(self.texture.height() as f64)) as u32;
+
+        let pix = (*self.texture.get_pixel(xp, yp)).channels();
+        
+        Vec3 {e: [(pix[0] as f64 /255.0).powf(self.gamma), (pix[1] as f64 /255.0).powf(self.gamma), (pix[2] as f64 /255.0).powf(self.gamma)]}
     }
 
     fn absorb(&self) -> Vec3 {
         Vec3 {e: [0.0, 0.0, 0.0]}
     }
 }
+
