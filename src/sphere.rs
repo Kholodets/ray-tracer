@@ -8,7 +8,7 @@ use crate::Material;
 pub struct Sphere<'c> {
     pub center: Vec3,
     pub radius: f64,
-    pub mat: &'c Material
+    pub mat: &'c dyn Material
 }
 
 impl Object for Sphere<'_> {
@@ -34,14 +34,14 @@ impl Object for Sphere<'_> {
 
         let n = (point - self.center) / self.radius;
 
-        let face = ray.dir().dot(&n) < 0.0;
+        let _face = ray.dir().dot(&n) < 0.0;
 
         Some(HitRecord {
             mat: self.mat,
             t: root,
             p: point,
             norm: n,
-            ff: face,
+            //ff: face,
         })
     }
 }

@@ -8,11 +8,11 @@ pub struct Light {
 }
 
 impl Material for Light {
-    fn albedo(&self, hr: &HitRecord) -> Vec3 {
+    fn albedo(&self, _hr: &HitRecord) -> Vec3 {
         Vec3 {e: [0.0, 0.0, 0.0]}
     }
 
-    fn scatter(&self, ray: &Ray, hr: &HitRecord) -> Option<Ray> {
+    fn scatter(&self, _ray: &Ray, _hr: &HitRecord) -> Option<Ray> {
         None
     }
 

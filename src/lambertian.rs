@@ -8,7 +8,7 @@ pub struct Lambertian {
 }
 
 impl Material for Lambertian {
-    fn scatter(&self, ray: &Ray, hr: &HitRecord) -> Option<Ray> {
+    fn scatter(&self, _ray: &Ray, hr: &HitRecord) -> Option<Ray> {
         let sd = hr.norm + Vec3::random_unit_vector();
 
         if sd.near_zero() {
@@ -18,7 +18,7 @@ impl Material for Lambertian {
         }
     }
 
-    fn albedo(&self, hr: &HitRecord) -> Vec3 {
+    fn albedo(&self, _hr: &HitRecord) -> Vec3 {
         self.color
     }
 

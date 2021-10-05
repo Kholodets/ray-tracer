@@ -2,7 +2,6 @@ use crate::HitRecord;
 use crate::Object;
 use crate::ray::Ray;
 use crate::vec3::Vec3;
-use std::cell::RefCell;
 use crate::lambertian::Lambertian;
 
 pub struct Scene<'a> {
@@ -18,7 +17,7 @@ impl Scene<'_> {
 impl Object for Scene<'_> {
     fn hit(&self, ray: &Ray, t_min: f64, t_max: f64) -> Option<HitRecord> {
         let mut chr: HitRecord = HitRecord {
-            t:0.0,p:Vec3{e:[0.0,0.0,0.0]},norm:Vec3{e:[0.0,0.0,0.0]},ff:false,
+            t:0.0,p:Vec3{e:[0.0,0.0,0.0]},norm:Vec3{e:[0.0,0.0,0.0]},/*ff:false,*/
             mat: &(Lambertian {color: Vec3 {e: [0.0, 0.0, 0.0]}})
         };
         let mut smallest_t: f64 = f64::INFINITY;

@@ -20,20 +20,20 @@ use std::io::Write;
 use std::io::stderr;
 extern crate rand;
 use rand::Rng;
-use std::num;
 extern crate image;
 
 const X_RES: i32 = 720;
 const Y_RES: i32 = 480;
-const ORIGIN_VEC: Vec3 = Vec3 {e: [0.0,0.0,0.0]};
 const TEST_SPHERE: Sphere = Sphere {center: Vec3 {e: [-0.5, 0.0, -1.5]}, radius: 0.5, mat: &MIRROR};
 const GROUND: Sphere = Sphere {center: Vec3 {e: [0.0, -1000.5, -1.0]}, radius: 1000.0, mat: &MIRROR};
 const AA_SAMPLES: i32 = 70;
 const REF_DEPTH: i32 = 30;
 const GAMMA: f64 = 4.0;
 const LAMB_RED: Lambertian = Lambertian {color: Vec3 {e: [0.5, 0.0, 0.0]}};
-const LAMB_GREY: Lambertian = Lambertian {color: Vec3 {e:[0.5, 0.5, 0.5]}};
+//const LAMB_GREEN: Lambertian = Lambertian {color: Vec3 {e: [0.0, 0.5, 0.0]}};
+//const LAMB_GREY: Lambertian = Lambertian {color: Vec3 {e:[0.5, 0.5, 0.5]}};
 const MIRROR: Metal = Metal {color: Vec3 {e: [0.8, 0.99, 0.99]}};
+
 
 pub trait Material {
     fn albedo(&self, hr: &HitRecord) -> Vec3;
@@ -42,11 +42,11 @@ pub trait Material {
 }
 
 pub struct HitRecord<'d> {
-    mat: &'d Material,
+    mat: &'d dyn Material,
     p: Vec3,
     norm: Vec3,
     t: f64,
-    ff: bool
+    //ff: bool
 }
 
 pub trait Object {
@@ -64,8 +64,8 @@ fn main() {
     let mut rng = rand::thread_rng();
 
     let vph = 2.0;
-    let vpw = ar * vph;
-    let fl = 1.0;
+    let _vpw = ar * vph;
+    let _fl = 1.0;
 
     let cam = Camera::new(vph, ar* vph, 1.0);
 
@@ -92,9 +92,9 @@ fn main() {
     });*/
 
     world.add(&Sphere {
-        center: Vec3 {e: [75.0, 75.0, 0.0]},
+        center: Vec3 {e: [75.0, 60.0, 50.0]},
         radius: 100.0,
-        mat: &Light {color: Vec3 {e: [1.0, 1.0, 0.8]}}
+        mat: &Light {color: Vec3 {e: [0.9, 1.0, 0.9]}}
     });
 
     for i in (0..Y_RES).rev() {
@@ -102,7 +102,7 @@ fn main() {
         stderr().flush().expect("failed to flush stderr");
         for j in 0..X_RES {
             let mut color = Vec3 {e: [0.0, 0.0, 0.0]};
-            for s in 0..AA_SAMPLES {
+            for _s in 0..AA_SAMPLES {
                 let u = (j as f64 + rng.gen::<f64>()) / (X_RES - 1) as f64;
                 let v = (i as f64 + rng.gen::<f64>()) / (Y_RES - 1) as f64;
                 let pr = cam.get_ray(u, v);
@@ -138,7 +138,7 @@ fn ray_color(ray: &Ray, scene: &dyn Object, depth: i32) -> Vec3 {
 
 fn sky_color(ray: &Ray) -> Vec3 {
     let t = 0.5*(ray.dir().unit_vector().y() + 1.0);
-    (Vec3 {e:[1.0,1.0,1.0]})*(1.0 - t)*0.1 + (Vec3 {e: [0.5, 0.7, 1.0]})*t*0.1
+    (Vec3 {e:[1.0,1.0,1.0]})*(1.0 - t) + (Vec3 {e: [0.5, 0.7, 1.0]})*t
 }
 
 fn clamp(n: f64, min: f64, max: f64) -> f64 {

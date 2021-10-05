@@ -2,8 +2,8 @@ use crate::vec3::Vec3;
 use crate::ray::Ray;
 use crate::Material;
 use crate::HitRecord;
-use image::{RgbImage, Rgb, Pixel};
-use image::{GenericImage, GenericImageView, ImageBuffer, open};
+use image::{RgbImage, Pixel};
+use image::open;
 
 pub struct Mtexture {
     pub texture: RgbImage,
@@ -24,7 +24,7 @@ impl Mtexture {
 
 
 impl Material for Mtexture {
-    fn scatter(&self, ray: &Ray, hr: &HitRecord) -> Option<Ray> {
+    fn scatter(&self, _ray: &Ray, hr: &HitRecord) -> Option<Ray> {
         let sd = hr.norm + Vec3::random_unit_vector();
 
         if sd.near_zero() {

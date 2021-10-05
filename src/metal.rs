@@ -17,7 +17,7 @@ impl Material for Metal {
         }
     }
 
-    fn albedo(&self, hr: &HitRecord) -> Vec3 {
+    fn albedo(&self, _hr: &HitRecord) -> Vec3 {
         self.color
     }
 
