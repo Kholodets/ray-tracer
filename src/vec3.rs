@@ -17,6 +17,10 @@ impl Vec3 {
         rv.unit_vector()
     }
 
+    pub fn new() -> Vec3 {
+        Vec3 {e: [0.0, 0.0, 0.0]}
+    }
+
     pub fn near_zero(&self) -> bool {
         let s = 1e-8;
         self.x().abs() < s && self.y().abs() < s && self.z().abs() < s

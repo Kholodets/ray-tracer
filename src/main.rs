@@ -21,6 +21,8 @@ use std::io::stderr;
 extern crate rand;
 use rand::Rng;
 extern crate image;
+extern crate rayon;
+use rayon::prelude::*;
 
 const X_RES: i32 = 720;
 const Y_RES: i32 = 480;
@@ -35,7 +37,7 @@ const LAMB_RED: Lambertian = Lambertian {color: Vec3 {e: [0.5, 0.0, 0.0]}};
 const MIRROR: Metal = Metal {color: Vec3 {e: [0.8, 0.99, 0.99]}};
 
 
-pub trait Material {
+pub trait Material: Sync {
     fn albedo(&self, hr: &HitRecord) -> Vec3;
     fn scatter(&self, ray: &Ray, hr: &HitRecord) -> Option<Ray>;
     fn absorb(&self) -> Vec3;
@@ -49,7 +51,7 @@ pub struct HitRecord<'d> {
     //ff: bool
 }
 
-pub trait Object {
+pub trait Object: Sync {
     fn hit(&self, ray: &Ray, t_min: f64, t_max: f64) -> Option<HitRecord>;
 }
 
@@ -61,7 +63,7 @@ fn main() {
     let ar = X_RES as f64 / Y_RES as f64;
    
 
-    let mut rng = rand::thread_rng();
+    //let mut rng = rand::thread_rng();
 
     let vph = 2.0;
     let _vpw = ar * vph;
@@ -78,38 +80,44 @@ fn main() {
     };
 
     let mut world = Scene {list: vec![&TEST_SPHERE, &GROUND, &flooshorb]};
-
+    
     world.add(&Sphere {
         center: Vec3 {e: [0.5, 0.0, -1.5]},
         radius: 0.5,
         mat: &LAMB_RED
     });
 
-    /*world.add(&Sphere {
+    world.add(&Sphere {
         center: Vec3 {e: [0.0, -0.2, -0.7]},
         radius: 0.2,
         mat: &Lambertian {color: Vec3 {e: [0.0, 0.0, 0.8]}}
-    });*/
+    });
 
     world.add(&Sphere {
         center: Vec3 {e: [75.0, 60.0, 50.0]},
         radius: 100.0,
         mat: &Light {color: Vec3 {e: [0.9, 1.0, 0.9]}}
     });
-
+    
     for i in (0..Y_RES).rev() {
         eprint!("\rLines remaining: {} ({:.2}%) ", i, 100.0*((Y_RES-i) as f32)/(Y_RES as f32));
         stderr().flush().expect("failed to flush stderr");
-        for j in 0..X_RES {
-            let mut color = Vec3 {e: [0.0, 0.0, 0.0]};
-            for _s in 0..AA_SAMPLES {
-                let u = (j as f64 + rng.gen::<f64>()) / (X_RES - 1) as f64;
-                let v = (i as f64 + rng.gen::<f64>()) / (Y_RES - 1) as f64;
-                let pr = cam.get_ray(u, v);
-                let scol = ray_color(&pr, &world, REF_DEPTH);
-                color = color + scol;
-            }
-            
+        let mut row = Vec::new();
+        (0..X_RES)
+            .into_par_iter()
+            .map( |j| {
+                (0..AA_SAMPLES).into_iter().map(|_|{
+                    let mut rayng = rand::thread_rng();
+                    let u = (j as f64 + rayng.gen::<f64>()) / (X_RES - 1) as f64;
+                    let v = (i as f64 + rayng.gen::<f64>()) / (Y_RES - 1) as f64;
+                    let pr = cam.get_ray(u, v);
+                    ray_color(&pr, &world, REF_DEPTH)
+                })
+                .fold(Vec3::new(), |acc, x| acc + x)            
+            })
+        .collect_into_vec(&mut row);
+        
+        for color in row{
             write_color(color, AA_SAMPLES);
         }
     }
