@@ -8,7 +8,7 @@ pub struct Light {
 }
 
 impl Material for Light {
-    fn albedo(&self, _hr: &HitRecord) -> Vec3 {
+    fn albedo(&self, _hr: &HitRecord, _time: u32) -> Vec3 {
         Vec3 {e: [0.0, 0.0, 0.0]}
     }
 

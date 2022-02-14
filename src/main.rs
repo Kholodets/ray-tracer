@@ -1,6 +1,7 @@
 mod vec3;
 mod ray;
 mod sphere;
+mod triangle;
 mod scene;
 mod camera;
 mod lambertian;
@@ -8,6 +9,7 @@ mod metal;
 mod light;
 mod mtexture;
 use crate::sphere::Sphere;
+use crate::triangle::Triangle;
 use crate::ray::Ray;
 use crate::vec3::Vec3;
 use crate::scene::Scene;
@@ -18,6 +20,7 @@ use crate::metal::Metal;
 use crate::mtexture::Mtexture;
 use std::io::Write;
 use std::io::stderr;
+use std::env;
 extern crate rand;
 use rand::Rng;
 extern crate image;
@@ -26,19 +29,19 @@ use rayon::prelude::*;
 
 const X_RES: i32 = 720;
 const Y_RES: i32 = 480;
-const TEST_SPHERE: Sphere = Sphere {center: Vec3 {e: [-0.5, 0.0, -1.5]}, radius: 0.5, mat: &MIRROR};
+const TEST_SPHERE: Sphere = Sphere {center: Vec3 {e: [-0.5, 0.0, -2.0]}, radius: 0.5, mat: &MIRROR};
 const GROUND: Sphere = Sphere {center: Vec3 {e: [0.0, -1000.5, -1.0]}, radius: 1000.0, mat: &MIRROR};
 const AA_SAMPLES: i32 = 70;
 const REF_DEPTH: i32 = 30;
 const GAMMA: f64 = 4.0;
 const LAMB_RED: Lambertian = Lambertian {color: Vec3 {e: [0.5, 0.0, 0.0]}};
-//const LAMB_GREEN: Lambertian = Lambertian {color: Vec3 {e: [0.0, 0.5, 0.0]}};
+const LAMB_GREEN: Lambertian = Lambertian {color: Vec3 {e: [0.0, 0.5, 0.0]}};
 //const LAMB_GREY: Lambertian = Lambertian {color: Vec3 {e:[0.5, 0.5, 0.5]}};
 const MIRROR: Metal = Metal {color: Vec3 {e: [0.8, 0.99, 0.99]}};
 
 
 pub trait Material: Sync {
-    fn albedo(&self, hr: &HitRecord) -> Vec3;
+    fn albedo(&self, hr: &HitRecord, time: u32) -> Vec3;
     fn scatter(&self, ray: &Ray, hr: &HitRecord) -> Option<Ray>;
     fn absorb(&self) -> Vec3;
 }
@@ -56,13 +59,22 @@ pub trait Object: Sync {
 }
 
 fn main() {
+    let args: Vec<String> = env::args().collect();
+
+    let time: u32 = 
+        if args.len() > 1 {
+            args[1].parse().unwrap()
+        } else {
+            0
+        }
+    ;
+            
     println!("P3");
     println!("{} {}", X_RES, Y_RES);
     println!("255");
 
     let ar = X_RES as f64 / Y_RES as f64;
-   
-
+    
     //let mut rng = rand::thread_rng();
 
     let vph = 2.0;
@@ -79,12 +91,19 @@ fn main() {
         mat: &floosh
     };
 
-    let mut world = Scene {list: vec![&TEST_SPHERE, &GROUND, &flooshorb]};
+    let testrig = Triangle::new(Vec3{e: [-0.1, 0.5, -0.3]}, 
+                                Vec3{e: [0.1, 0.5, -0.3]}, 
+                                Vec3{e: [0.0, 0.7, -0.3]},
+                                &LAMB_RED);
+
+
+
+    let mut world = Scene {list: vec![&TEST_SPHERE, &GROUND, &flooshorb/*, &testrig*/]};
     
     world.add(&Sphere {
         center: Vec3 {e: [0.5, 0.0, -1.5]},
         radius: 0.5,
-        mat: &LAMB_RED
+        mat: &MIRROR
     });
 
     world.add(&Sphere {
@@ -93,11 +112,11 @@ fn main() {
         mat: &Lambertian {color: Vec3 {e: [0.0, 0.0, 0.8]}}
     });
 
-    world.add(&Sphere {
+    /*world.add(&Sphere {
         center: Vec3 {e: [75.0, 60.0, 50.0]},
         radius: 100.0,
         mat: &Light {color: Vec3 {e: [0.9, 1.0, 0.9]}}
-    });
+    });*/
     
     for i in (0..Y_RES).rev() {
         eprint!("\rLines remaining: {} ({:.2}%) ", i, 100.0*((Y_RES-i) as f32)/(Y_RES as f32));
@@ -111,7 +130,7 @@ fn main() {
                     let u = (j as f64 + rayng.gen::<f64>()) / (X_RES - 1) as f64;
                     let v = (i as f64 + rayng.gen::<f64>()) / (Y_RES - 1) as f64;
                     let pr = cam.get_ray(u, v);
-                    ray_color(&pr, &world, REF_DEPTH)
+                    ray_color(&pr, &world, REF_DEPTH, time)
                 })
                 .fold(Vec3::new(), |acc, x| acc + x)            
             })
@@ -124,7 +143,7 @@ fn main() {
     eprintln!("\nDone!"); 
 }
 
-fn ray_color(ray: &Ray, scene: &dyn Object, depth: i32) -> Vec3 {
+fn ray_color(ray: &Ray, scene: &dyn Object, depth: i32, time: u32) -> Vec3 {
     if depth <= 0 {
         Vec3 {e: [0.0, 0.0, 0.0]}
 
@@ -134,7 +153,7 @@ fn ray_color(ray: &Ray, scene: &dyn Object, depth: i32) -> Vec3 {
         match h {
             Some(hr) => {
                 match hr.mat.scatter(ray, &hr) {
-                    Some(sr) => ray_color(&sr, scene, depth - 1)*hr.mat.albedo(&hr),
+                    Some(sr) => ray_color(&sr, scene, depth - 1, time)*hr.mat.albedo(&hr, time),
                     None => hr.mat.absorb(),
                 }
             },

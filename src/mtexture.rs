@@ -34,8 +34,9 @@ impl Material for Mtexture {
         }
     }
 
-    fn albedo(&self, hr: &HitRecord) -> Vec3 {
-        let xp = ((hr.norm.x()/2.0 + 0.5)*(self.x as f64)) as u32;
+    fn albedo(&self, hr: &HitRecord, time: u32) -> Vec3 {
+        let xpos = ((hr.norm.x()/2.0 + 0.5)*(self.x as f64)) as u32;
+        let xp = (xpos + time) % self.x;
         let yp = (((-hr.norm.y())/2.0 + 0.5)*(self.texture.height() as f64)) as u32;
 
         let pix = (*self.texture.get_pixel(xp, yp)).channels();
